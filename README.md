@@ -17,7 +17,7 @@ Follow these instructions to get the game running on your local machine.
 
 1.  **Clone the repository** (or download the source code):
     ```bash
-    git clone https://github.com/yourusername/delusions-embrace.git
+    https://github.com/False-Avarice/delusions-embrace
     cd delusions-embrace
     ```
 
