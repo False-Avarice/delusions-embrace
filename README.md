@@ -2,7 +2,6 @@
 
 **Delusions Embrace** is an atmospheric, text-based psychological horror game. You play as a protagonist grappling with sanity.
 
-Your choices matter. Hidden stats track your **Sanity**, **Doubt**, and **Attachment**, subtly altering the narrative text and the game's conclusion.
 
 
 ## Getting Started
