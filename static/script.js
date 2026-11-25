@@ -1,18 +1,36 @@
 document.addEventListener('DOMContentLoaded', () => {
     const storyLog = document.getElementById('story-log');
     const choicesContainer = document.getElementById('choices-container');
-    let isTyping = false;
+    const status = document.getElementById('game-status');
+    let choiceHistory = [];
 
-    // Start the game
-    fetch('/start', { method: 'POST' })
-        .then(response => response.json())
-        .then(data => handleResponse(data))
-        .catch(err => console.error('Error starting game:', err));
+    startGame();
+
+    async function requestScene(url, options) {
+        const response = await fetch(url, { method: 'POST', ...options });
+        if (!response.ok) throw new Error(`Game request failed: ${response.status}`);
+        return response.json();
+    }
+
+    async function startGame() {
+        choicesContainer.replaceChildren();
+        status.textContent = '';
+
+        let scene;
+        try {
+            scene = await requestScene('/start');
+        } catch {
+            status.textContent = 'The game could not start. Try again.';
+            showChoices(['Try again'], startGame);
+            return;
+        }
+        handleResponse(scene);
+    }
 
     function handleResponse(data) {
-        // Clear previous content ONLY if it's the intro (restart)
-        if (data.text && data.text.includes("DELUSIONS EMBRACE")) {
-            storyLog.innerHTML = '';
+        choiceHistory = data.choice_history;
+        if (choiceHistory.length === 0) {
+            storyLog.replaceChildren();
         }
 
         // Clear choices container to prepare for new choices
@@ -83,14 +101,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function showChoices(choices) {
+    function showChoices(choices, onChoice = makeChoice) {
         if (!choices || choices.length === 0) return;
 
         choices.forEach((choiceText, index) => {
             const btn = document.createElement('button');
             btn.classList.add('choice-btn');
             btn.textContent = choiceText;
-            btn.onclick = () => makeChoice(index, choiceText);
+            btn.onclick = () => onChoice(index, choiceText);
             choicesContainer.appendChild(btn);
         });
 
@@ -101,14 +119,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 100);
     }
 
-    function makeChoice(index, choiceText) {
-        // Optimistic UI update? No, wait for server.
-        // Disable buttons
+    async function makeChoice(index, choiceText) {
         const buttons = choicesContainer.querySelectorAll('button');
         buttons.forEach(b => b.disabled = true);
+        status.textContent = '';
 
-        // Display the user's choice in the log
-        if (choiceText) {
+        let scene;
+        try {
+            scene = await requestScene('/choice', {
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ choice_index: index, choice_history: choiceHistory })
+            });
+        } catch {
+            status.textContent = 'Your choice could not be loaded. Select it again to retry.';
+            buttons.forEach(b => b.disabled = false);
+            return;
+        }
+
+        if (scene.choice_history.length > 0) {
             const choiceP = document.createElement('p');
             choiceP.textContent = `> ${choiceText}`;
             choiceP.style.color = 'var(--highlight-color)';
@@ -119,15 +147,6 @@ document.addEventListener('DOMContentLoaded', () => {
             storyLog.scrollTop = storyLog.scrollHeight;
         }
 
-        fetch('/choice', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ choice_index: index })
-        })
-        .then(response => response.json())
-        .then(data => handleResponse(data))
-        .catch(err => console.error('Error making choice:', err));
+        handleResponse(scene);
     }
 });

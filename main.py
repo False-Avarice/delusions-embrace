@@ -3,6 +3,8 @@ import sys
 import time
 import random
 
+from game_engine import GLITCH_SANITY, get_ending
+
 class GameState:
     def __init__(self):
         self.sanity = 100
@@ -196,7 +198,7 @@ def act_three(state):
     
     # Glitching effect logic (simple)
     glitch_text = "Irina's features contort."
-    if state.sanity < 70:
+    if state.sanity <= GLITCH_SANITY:
         glitch_text = "Irina's f e a t u r e s  c o n t o r t."
     
     type_text(f"\n{glitch_text}")
@@ -251,11 +253,12 @@ def act_four(state):
     type_text("There is no cafe.")
     
     # Ending logic
-    if state.sanity > 80 and state.doubt > 50:
+    ending = get_ending(state.sanity, state.doubt, state.attachment)
+    if ending == "clarity":
         ending_clarity()
-    elif state.attachment > 80:
+    elif ending == "delusion":
         ending_delusion()
-    elif state.sanity < 40:
+    elif ending == "collapse":
         ending_collapse()
     else:
         ending_resignation()
@@ -308,4 +311,7 @@ def main():
     time.sleep(2)
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except (EOFError, KeyboardInterrupt):
+        print("\nGame exited.")

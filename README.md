@@ -45,7 +45,7 @@ Follow these instructions to get the game running on your local machine.
 #### Web Version (Recommended)
 This version features the full atmospheric visual experience with CRT effects and seamless text flow.
 
-1.  Run the Flask application:
+1.  Start the Flask development server. It listens on localhost with debug mode disabled.
     ```bash
     python3 app.py
     ```

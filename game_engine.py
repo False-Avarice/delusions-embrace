@@ -1,11 +1,17 @@
-import random
+GLITCH_SANITY = 75
+
+
+def get_ending(sanity, doubt, attachment):
+    if sanity > 80 and doubt >= 45:
+        return "clarity"
+    if attachment >= 35:
+        return "delusion"
+    if sanity <= 60:
+        return "collapse"
+    return "resignation"
+
 
 class GameEngine:
-    def __init__(self):
-        # We don't store state here in a web app, state is passed in/out.
-        # But we define the structure of the story here.
-        pass
-
     @staticmethod
     def get_initial_state():
         return {
@@ -13,10 +19,15 @@ class GameEngine:
             "doubt": 0,
             "attachment": 0,
             "current_step": "intro",
-            "history": [] # List of text lines shown so far
         }
 
     def process_step(self, state, choice_index=None):
+        scene = self._process_step(state, choice_index)
+        for stat in ("sanity", "doubt", "attachment"):
+            state[stat] = max(0, min(100, state[stat]))
+        return scene
+
+    def _process_step(self, state, choice_index):
         step_id = state.get("current_step", "intro")
         
         # Dispatcher
@@ -28,14 +39,10 @@ class GameEngine:
             return self._step_act_one_choice_1(state, choice_index)
         elif step_id == "act_one_choice_2":
             return self._step_act_one_choice_2(state, choice_index)
-        elif step_id == "act_one_long_time":
-            return self._step_act_one_long_time(state)
         elif step_id == "act_two_start":
             return self._step_act_two_start(state)
         elif step_id == "act_two_choice_time":
             return self._step_act_two_choice_time(state, choice_index)
-        elif step_id == "act_two_loop":
-            return self._step_act_two_loop(state)
         elif step_id == "act_two_choice_loop":
             return self._step_act_two_choice_loop(state, choice_index)
         elif step_id == "act_three_start":
@@ -46,6 +53,9 @@ class GameEngine:
             return self._step_act_four_reveal(state)
         elif step_id == "act_four_ending":
             return self._step_act_four_ending(state)
+        elif step_id == "restart":
+            state.update(self.get_initial_state())
+            return self._step_intro(state)
         
         return {"text": ["Error: Unknown step"], "choices": [], "next_step": "intro"}
 
@@ -225,7 +235,7 @@ class GameEngine:
         ]
         
         glitch_text = "Irina's features contort."
-        if state["sanity"] < 70:
+        if state["sanity"] <= GLITCH_SANITY:
             glitch_text = "Irina's f e a t u r e s  c o n t o r t."
         
         text.append(glitch_text)
@@ -288,11 +298,9 @@ class GameEngine:
 
     def _step_act_four_ending(self, state, choice_index=None):
         text = []
-        sanity = state["sanity"]
-        doubt = state["doubt"]
-        attachment = state["attachment"]
+        ending = get_ending(state["sanity"], state["doubt"], state["attachment"])
 
-        if sanity > 80 and doubt > 50:
+        if ending == "clarity":
             text = [
                 "You sit in the silence.",
                 "You created her because the solitude was too heavy.",
@@ -300,7 +308,7 @@ class GameEngine:
                 "So yeah, that's how you found out you were delusional.",
                 "At least now you know the truth."
             ]
-        elif attachment > 80:
+        elif ending == "delusion":
             text = [
                 "You close your eyes.",
                 "She said she didn't exist.",
@@ -309,7 +317,7 @@ class GameEngine:
                 "So yeah, maybe you are delusional.",
                 "But isn't this better than being alone?"
             ]
-        elif sanity < 40:
+        elif ending == "collapse":
             text = [
                 "You tear at your hair.",
                 "Where did she go? Where did the world go?",
@@ -330,7 +338,6 @@ class GameEngine:
         text.append("")
         text.append("--- FIN ---")
         
-        # Reset or disable choices
-        state["current_step"] = "intro" # Loop back or just end
+        state["current_step"] = "restart"
         choices = ["Restart"]
         return {"text": text, "choices": choices}
