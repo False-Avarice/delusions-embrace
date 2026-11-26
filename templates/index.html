@@ -4,22 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Delusions Embrace</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=3">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=6">
     <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=VT323&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="overlay"></div>
     <div class="scanline"></div>
-    <div class="container">
-        <div id="story-log" class="story-text">
+    <main class="container">
+        <button id="sound-toggle" type="button" aria-label="Sound" aria-pressed="false" hidden>Sound off</button>
+        <div id="story-log" class="story-text" tabindex="0" aria-label="Story">
             <!-- Text appears here -->
         </div>
         <div id="game-status" role="alert"></div>
-        <div id="choices-container" class="choices hidden">
+        <button id="reveal-passage" class="choice-btn reveal-passage" type="button" hidden>Reveal passage</button>
+        <div id="choices-container" class="choices" hidden>
             <!-- Choices appear here -->
         </div>
-    </div>
+    </main>
 
-    <script src="{{ url_for('static', filename='script.js') }}?v=2"></script>
+    <script type="module" src="{{ url_for('static', filename='script.js') }}?v=4"></script>
 </body>
 </html>

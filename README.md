@@ -43,7 +43,8 @@ Follow these instructions to get the game running on your local machine.
 ### Playing the Game
 
 #### Web Version (Recommended)
-This version features the full atmospheric visual experience with CRT effects and seamless text flow.
+The web version includes CRT effects and animated text. Select **Reveal passage** to read the full passage immediately.
+Use the **Sound** button to enable or mute the rain, room ambience, and story effects.
 
 1.  Start the Flask development server. It listens on localhost with debug mode disabled.
     ```bash
@@ -59,3 +60,5 @@ A pure text-based experience running directly in your command line.
     ```bash
     python3 main.py
     ```
+
+    Use `python3 main.py --instant` to show each passage immediately.
