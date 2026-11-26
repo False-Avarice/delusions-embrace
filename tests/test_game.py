@@ -147,6 +147,36 @@ class GameTests(unittest.TestCase):
         self.assertEqual(len(ending['choice_history']), MAX_CHOICES_PER_RUN)
         self.assertEqual(self.choose(ending), intro)
 
+    def test_sound_cues_follow_the_window_route_into_the_secret_ending(self):
+        def cues(scene):
+            anchors = scene['audio'].get('paragraphs', {})
+            return [anchors[key] for key in sorted(anchors, key=int)]
+
+        opening = self.choose(self.start())
+        self.assertEqual([sound for _, sound in cues(opening)], ['chair', 'bell', 'cup'])
+        server = self.choose(opening)
+        self.assertEqual(cues(server), [])
+        street = self.choose(server)
+        self.assertEqual(cues(street), [['Outside, cold rain', 'street']])
+        self.assertEqual(street['audio']['choices'], {'1': 'tap'})
+        window = self.choose(street, 1)
+        self.assertEqual(window['audio']['location'], 'street')
+        self.assertEqual([sound for _, sound in cues(window)], ['answer', 'cafe', 'bell'])
+
+        receipt = self.choose(window)
+        self.assertEqual(receipt['audio']['location'], 'cafe')
+        room = self.choose(receipt)
+        self.assertEqual(room['audio'].get('location', receipt['audio']['location']), 'cafe')
+        self.assertEqual(cues(room), [['The lamp goes out.', 'blackout']])
+        door = self.choose(room, 2)
+        self.assertEqual(door['audio']['location'], 'room')
+        warning = self.choose(door, 3)
+        self.assertEqual(warning['audio'].get('location', door['audio']['location']), 'room')
+        self.assertEqual(cues(warning), [['Please stop.', 'hush']])
+        morning = self.choose(warning, 1)
+        self.assertEqual(morning['audio']['location'], 'quiet')
+        self.assertEqual(cues(morning), [['sets the cup down', 'cup']])
+
     def test_choice_retries_and_independent_runs(self):
         first_tab = self.choose(self.start())
         expected = self.choose(first_tab, 1)

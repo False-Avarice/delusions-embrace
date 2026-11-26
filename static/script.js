@@ -1,4 +1,4 @@
-import { Soundscape } from './soundscape.js';
+import { Soundscape } from './soundscape.js?v=2';
 
 document.addEventListener('DOMContentLoaded', () => {
     const storyLog = document.getElementById('story-log');
@@ -10,9 +10,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     const characterDelay = 16;
     const paragraphDelay = 180;
+    const revealCueSpacing = 3200;
     let choiceHistory = [];
     let storyVersion;
     let choiceSounds = {};
+    let revealedCues = [];
+    let cueTimer;
+
+    function playRevealedCues() {
+        clearTimeout(cueTimer);
+        while (revealedCues.length) {
+            sound.play(revealedCues.shift());
+            if (revealedCues.length && !document.hidden) {
+                cueTimer = setTimeout(playRevealedCues, revealCueSpacing);
+                break;
+            }
+        }
+    }
 
     function updateSoundButton() {
         soundButton.textContent = sound.context ? 'Sound on' : 'Sound off';
@@ -36,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     document.addEventListener('visibilitychange', async () => {
+        if (document.hidden) playRevealedCues();
         const ctx = sound.context;
         if (!ctx) return;
         try {
@@ -83,11 +98,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function handleResponse(scene) {
+        clearTimeout(cueTimer);
+        revealedCues = [];
         const audio = scene.audio || {};
         const cues = audio.paragraphs || {};
         choiceSounds = audio.choices || {};
         sound.beginPassage(audio.location);
-        let passedCue = false;
+        let lastCueParagraph = -1;
+        let lastCueTime = -Infinity;
         choiceHistory = scene.choice_history;
         storyVersion = scene.story_version;
         if (choiceHistory.length === 0) {
@@ -119,8 +137,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function revealPassage() {
             clearTimeout(timer);
-            const firstCue = Object.values(cues)[0];
-            if (!passedCue && firstCue) sound.play(firstCue[1]);
             paragraphs.replaceChildren();
             for (const text of scene.text) {
                 const paragraph = document.createElement('p');
@@ -130,6 +146,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const storyTop = storyLog.getBoundingClientRect().top;
             storyLog.scrollTop += passage.getBoundingClientRect().top - storyTop;
             finishPassage();
+
+            revealedCues = Object.entries(cues)
+                .filter(([index]) => Number(index) > lastCueParagraph)
+                .map(([, cue]) => cue[1]);
+            if (revealedCues.length) {
+                const wait = lastCueTime + revealCueSpacing - performance.now();
+                if (wait > 0 && !document.hidden) cueTimer = setTimeout(playRevealedCues, wait);
+                else playRevealedCues();
+            }
         }
 
         function typeParagraph(index) {
@@ -150,7 +175,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 paragraph.textContent = text.slice(0, length);
                 if (!triggered && anchor >= 0 && length >= anchor + cue[0].length) {
                     sound.play(cue[1]);
-                    passedCue = true;
+                    lastCueParagraph = index;
+                    lastCueTime = performance.now();
                     triggered = true;
                 }
                 storyLog.scrollTop = storyLog.scrollHeight;

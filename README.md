@@ -62,3 +62,7 @@ A pure text-based experience running directly in your command line.
     ```
 
     Use `python3 main.py --instant` to show each passage immediately.
+
+## Audio credits
+
+The rain was recorded by alex36917 and edited for Blanket by Porrumentzio under Creative Commons Attribution (CC BY). For this game, a stereo excerpt was trimmed, equalized, crossfaded into a loop, and encoded as MP3. [Original recording](https://freesound.org/people/alex36917/sounds/524605/) · [Blanket credits and licensing](https://github.com/rafaelmardojai/blanket/blob/2eaca9ba5a1b624adf90b6ccee1008efc46f0273/SOUNDS_LICENSING.md)

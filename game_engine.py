@@ -33,13 +33,14 @@ class GameEngine:
             "You keep it on. The walk home takes six minutes and you have been putting it off "
             "for the better part of an hour. At home the radiator knocks once, pauses, then knocks twice. "
             "You can hear that rhythm even with the pillow over your head.",
-            "The server lifts chairs onto the tables by the window. Behind him, the clock says 11:47. "
+            "The server drags one chair across the tiles and lifts it onto a table by the window.",
+            "Behind him, the clock says 11:47. "
             "You have watched the minute hand twitch in place three times. The fourth time, the door "
             "opens and the little brass bell above it rings twice.",
             "A woman carries a cup from the counter to your table. You know her name is Irina "
             "before she tells you. There's a thread coming loose from her cuff. She winds it "
             "around her finger while she waits for you to make room.",
-            "“Two sugars,” she says, setting the coffee down in front of you. “Leave the second one at the bottom.” "
+            "“Two sugars,” she says, setting the cup on its saucer in front of you. “Leave the second one at the bottom.” "
             "She even puts the handle on your left. The small kindness takes you so much by surprise "
             "that you touch the cup before you remember you haven't ordered.",
             "The server comes over with his pad. “What can I get you?” "
@@ -51,8 +52,9 @@ class GameEngine:
             "Ask Irina how she knows your order.",
             "Move the cup and see what happens.",
         ], title="Closing Time", audio={"paragraphs": {
-            1: ("door opens", "bell"),
-            3: ("setting the coffee down", "cup"),
+            1: ("drags one chair", "chair"),
+            2: ("door opens", "bell"),
+            4: ("setting the cup on its saucer", "cup"),
         }})
 
     def _coffee(self, state, choice):
@@ -75,9 +77,7 @@ class GameEngine:
         )[choice]
         state["encounter"] = encounter
         cues = {}
-        if encounter == "server":
-            cues[0] = ("the other chair", "chair")
-        elif encounter == "cup":
+        if encounter == "cup":
             cues[0] = ("You slide the cup", "cup")
 
         return self._scene(state, "key", [
@@ -128,7 +128,7 @@ class GameEngine:
             "Cross back and go through the café door.",
             "Knock on the pharmacy window.",
             "Keep walking toward home.",
-        ], title="Across the Street", audio={"location": "street", "choices": {1: "tap"}})
+        ], title="Across the Street", audio={"paragraphs": {1: ("Outside, cold rain", "street")}, "choices": {1: "tap"}})
 
     def _second_bell(self, state, choice):
         street, return_text = (
@@ -143,7 +143,7 @@ class GameEngine:
             ("window", [
                 "You knock once on the pharmacy window. The glass answers with two knocks. The sound is too hollow for glass. "
                 "You hear it through the bones of your wrist, the way you can hear the pipes at home if you touch the radiator. "
-                "You lift your hand. The answering knocks repeat.",
+                "You lift your hand. Nothing follows.",
                 "The shutter behind the window rolls up. Irina is on the other side, with her palm flat on the pane opposite yours. "
                 "You pull back and catch your hip on the café table. Across the road, through the glass behind her, "
                 "the pharmacy is shuttered. On the café glass, two fresh circles of fog are level with your palms.",
@@ -159,7 +159,12 @@ class GameEngine:
         )[choice]
         state["street"] = street
 
-        cues = {2: ("You sit.", "bell")}
+        cafe_arrival = {
+            "door": "Inside, you turn",
+            "window": "catch your hip on the café table",
+            "walk": "It is the door of the café.",
+        }[street]
+        cues = {1: (cafe_arrival, "cafe"), 2: ("You sit.", "bell")}
         if street == "door":
             cues[0] = ("The bell above the door", "bell")
         elif street == "window":
@@ -179,7 +184,7 @@ class GameEngine:
         ], [
             "Lift the cloth and look underneath yourself.",
             "Ask Irina to move the table.",
-        ], title="The Second Bell", audio={"location": "cafe", "paragraphs": cues})
+        ], title="The Second Bell", audio={"location": "street", "paragraphs": cues})
 
     def _receipt(self, state, choice):
         state["felt_draft"] = choice == 0
@@ -216,7 +221,7 @@ class GameEngine:
             "Turn the receipt over and read it.",
             "Ask Irina to read it to you.",
             "Fold it smaller without looking.",
-        ], glitch_line=None if state["felt_draft"] else 2)
+        ], glitch_line=None if state["felt_draft"] else 2, audio={"location": "cafe"})
 
     def _room(self, state, choice):
         receipt, response = (
@@ -260,7 +265,7 @@ class GameEngine:
 
         return self._scene(state, "listen", [
             response,
-            "The lamp goes out. In the dark you hear the slow knock of the radiator. Once, a pause, twice. "
+            "The lamp goes out. The café bell rings twice in the dark. As it dies away you hear the radiator. Once, a pause, twice. "
             "When the light comes back the radiator is beside your bed. Your hand is still on the corner of the table. "
             "Beneath your fingers it's the corner of your desk. There is no café around it.",
             encounter_echo,
@@ -273,7 +278,7 @@ class GameEngine:
             "Sometimes you hear them set their bag down so they can use both hands. "
             "Tonight the sound keeps falling so close to the bell that you can't tell which of them you heard.",
         ], [label for label, _, _ in self._door_cues(state)], title="The Room",
-            audio={"location": "room", "paragraphs": {1: ("The lamp goes out.", "blackout")}})
+            audio={"paragraphs": {1: ("The lamp goes out.", "blackout")}})
 
     @staticmethod
     def _door_cues(state):
@@ -345,7 +350,7 @@ class GameEngine:
                 "feel more certain than anything you can remember."
             )
             choices.append("Tell her she was warm.")
-        return self._scene(state, "door", text, choices)
+        return self._scene(state, "door", text, choices, audio={"location": "room"})
 
     def _aftermath(self, state, choice):
         if choice == 3:
@@ -358,7 +363,7 @@ class GameEngine:
             ], [
                 "Let Irina go and stay in the room.",
                 "Tell her she wanted to stay.",
-            ], audio={"location": "quiet"})
+            ], audio={"paragraphs": {2: ("Please stop.", "hush")}})
         if choice == 0:
             title, text = "The Ghost in the Room", self._ghost(state)
         elif choice == 1:
@@ -390,7 +395,7 @@ class GameEngine:
             "In the morning, Irina brings you coffee. She sets the cup down with the handle facing away from you.",
             "At the café, she knew to put it on your left. You rest your hands in your lap and wait.",
             "She waits for you to tell her where it goes.",
-        ], ["Restart"], title="A Better Irina", audio={"paragraphs": {2: ("sets the cup down", "cup")}})
+        ], ["Restart"], title="A Better Irina", audio={"location": "quiet", "paragraphs": {2: ("sets the cup down", "cup")}})
 
     @staticmethod
     def _ghost(state):
