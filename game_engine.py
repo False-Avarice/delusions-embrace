@@ -1,3 +1,12 @@
+# Positive points come from personal checks. Negative points come from taking
+# Irina's uncanny answers as evidence. The score matters at the ambiguous door cue.
+GROUNDING_POINTS = {
+    "coffee": (0, -1, 1),   # Ask the server, ask Irina, test the cup.
+    "key": (0, 1),          # Give Irina the key or keep it as a physical reference.
+    "receipt": (1, -1, 0),  # Read it, ask Irina to read it, or fold it away.
+}
+
+
 class GameEngine:
     def __init__(self):
         self.steps = {
@@ -14,13 +23,17 @@ class GameEngine:
 
     @staticmethod
     def get_initial_state():
-        return {"current_step": "begin"}
+        return {"current_step": "begin", "grounding": 0}
 
     def process_step(self, state, choice_index=None):
         if choice_index is None or state["current_step"] == "restart":
             state.clear()
+            state.update(self.get_initial_state())
             return self._scene(state, "begin", [], ["Begin"], title="Delusions Embrace", audio={"location": "cafe"})
-        return self.steps[state["current_step"]](state, choice_index)
+        step = state["current_step"]
+        if step in GROUNDING_POINTS:
+            state["grounding"] += GROUNDING_POINTS[step][choice_index]
+        return self.steps[step](state, choice_index)
 
     @staticmethod
     def _scene(state, next_step, text, choices, *, title=None, glitch_line=None, audio=None):
@@ -327,9 +340,32 @@ class GameEngine:
              "He starts the question again before you can answer. You put your hand on the knob."),
         )
 
+    @staticmethod
+    def _opens_onto_landing(grounding, cue):
+        if cue == "landing":
+            return True
+        if cue == "irina":
+            return False
+        # The draught supports the landing. A repeating street cue supports the café.
+        cue_points = 1 if cue == "draft" else -1
+        # Without stronger evidence for the landing, the café holds.
+        return grounding + cue_points > 0
+
     def _at_the_door(self, state, choice):
         _, cue, response = self._door_cues(state)[choice]
         state["exit_cue"] = cue
+        opens_onto_landing = self._opens_onto_landing(state["grounding"], cue)
+        state["opens_onto_landing"] = opens_onto_landing
+        if cue == "echo" and opens_onto_landing:
+            response += (
+                " Then a key drops on the other side. You hear someone get down on one knee "
+                "and brush a hand back and forth over the carpet."
+            )
+        elif cue == "draft" and not opens_onto_landing:
+            response += (
+                " The bag brushes the wood again. It makes exactly the same scrape. "
+                "You hear the little café bell at the end of it."
+            )
 
         text = [
             response,
@@ -368,7 +404,7 @@ class GameEngine:
             title, text = "The Ghost in the Room", self._ghost(state)
         elif choice == 1:
             title, text = "Quiet Resignation", self._resignation(state)
-        elif state["exit_cue"] in ("landing", "draft"):
+        elif state["opens_onto_landing"]:
             title, text = "Cold Clarity", self._clarity()
         else:
             title, text = "Fractured", self._fractured(state)
@@ -452,14 +488,22 @@ class GameEngine:
 
     @staticmethod
     def _fractured(state):
-        cue_echo = (
-            "The man stops halfway through asking if you're waiting for anyone. You hear the end of his question from your own mouth."
-            if state["exit_cue"] == "irina" else {
+        if state["exit_cue"] == "irina":
+            cue_echo = (
+                "The man stops halfway through asking if you're waiting for anyone. "
+                "You hear the end of his question from your own mouth."
+            )
+        elif state["exit_cue"] == "draft":
+            cue_echo = (
+                "The draught is coming from under the café table. A shopping bag scrapes across the tiles "
+                "every time the loose tablecloth lifts."
+            )
+        else:
+            cue_echo = {
                 "door": "The bell rings twice behind you. Your hand is still on the knob. Irina raises a finger for the bill.",
                 "window": "Two knocks come from the table. When you look down, your own knuckles are against the wood.",
                 "walk": "The hooked marks run to your chair. You try to stop at the last one. Your shoe has already come down on it.",
             }[state["street"]]
-        )
         return [
             "You open the bedroom door into the café. The windows are dark and the clock says 11:47. "
             "Your chair is occupied. There's rain on the shoulders of the coat the person in it is wearing. "

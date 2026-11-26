@@ -1,6 +1,7 @@
 import subprocess
 import sys
 import unittest
+from collections import Counter
 
 from app import MAX_CHOICES_PER_RUN, STORY_VERSION, app
 from game_engine import GameEngine
@@ -25,11 +26,12 @@ class GameTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200, response.get_json())
         return response.get_json()
 
-    def test_every_path_finishes_and_door_outcomes_follow_the_selected_cue(self):
+    def test_every_path_finishes_with_balanced_door_outcomes(self):
         engine = GameEngine()
         initial = engine.get_initial_state()
         stack = [(initial, engine.process_step(initial), (), 0)]
-        endings = set()
+        endings = Counter()
+        ambiguous_door_endings = Counter()
         while stack:
             state, scene, choices, words = stack.pop()
             words += sum(len(text.split()) for text in scene['text'])
@@ -39,14 +41,16 @@ class GameTests(unittest.TestCase):
                 self.assertIn(index, range(len(scene['choices'])))
 
             if state['current_step'] == 'restart':
-                endings.add(scene['title'])
+                endings[scene['title']] += 1
                 orientation, action = choices[-2:]
                 if action == 'Open the bedroom door.':
-                    found_landing = orientation in (
-                        'Listen for your neighbour on the landing.',
-                        'Follow the draught under the door.',
-                    )
-                    self.assertEqual(scene['title'], 'Cold Clarity' if found_landing else 'Fractured')
+                    if orientation == 'Listen for your neighbour on the landing.':
+                        self.assertEqual(scene['title'], 'Cold Clarity')
+                    elif orientation == "Ask Irina what's on the other side.":
+                        self.assertEqual(scene['title'], 'Fractured')
+                    else:
+                        self.assertIn(scene['title'], ('Cold Clarity', 'Fractured'))
+                        ambiguous_door_endings[scene['title']] += 1
                 elif action == 'Ask Irina to stay.':
                     self.assertEqual(scene['title'], 'The Ghost in the Room')
                 elif action == 'Tell her she wanted to stay.':
@@ -70,9 +74,28 @@ class GameTests(unittest.TestCase):
                 next_scene = engine.process_step(next_state, index)
                 stack.append((next_state, next_scene, (*choices, choice), words))
 
+        self.assertEqual(ambiguous_door_endings, {'Cold Clarity': 54, 'Fractured': 54})
         self.assertEqual(endings, {
-            'Cold Clarity', 'Fractured', 'Quiet Resignation', 'The Ghost in the Room', 'A Better Irina',
+            'Cold Clarity': 162, 'Fractured': 162, 'Quiet Resignation': 360,
+            'The Ghost in the Room': 324, 'A Better Irina': 36,
         })
+
+    def test_grounding_can_tip_either_ambiguous_door_cue(self):
+        cases = (
+            (1, 0, 'Follow the draught under the door.', 'The bag brushes the wood again.', 'Fractured'),
+            (2, 1, 'Follow the repeating knocks.', 'Then a key drops on the other side.', 'Cold Clarity'),
+        )
+        for coffee, table, cue, extra_clue, clue_ending in cases:
+            for keep_key in (False, True):
+                with self.subTest(cue=cue, keep_key=keep_key):
+                    scene = self.start()
+                    for index in (0, coffee, int(keep_key), 1, table, 2):
+                        scene = self.choose(scene, index)
+                    self.assertEqual(scene['choices'][1], cue)
+                    door = self.choose(scene, 1)
+                    expected = 'Cold Clarity' if keep_key else 'Fractured'
+                    self.assertEqual(extra_clue in door['text'][0], expected == clue_ending)
+                    self.assertEqual(self.choose(door, 2)['title'], expected)
 
     def test_room_pays_off_each_street_route_and_respects_the_receipt_choice(self):
         cases = (
