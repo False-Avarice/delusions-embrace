@@ -96,9 +96,9 @@ class GameEngine:
         return self._scene(state, "key", [
             response,
             "You try to stand. The floor feels far enough away that your knees give a little. "
-            "Irina sets both feet flat and waits for you to copy her. “Which foot is colder?” "
-            "Your left sock is wet where your shoe let in the rain. Saying so helps. "
-            "She counts softly while you breathe. You feel both feet against the tiles.",
+            "Irina puts her palm on the table. “Put your hand here. What can you feel?” "
+            "Your thumb catches where the varnish has worn away. “The grain,” you say. "
+            "She keeps her hand there until you're sitting again.",
             "She stays quiet while you drink. The coffee is too sweet. It is exactly what you wanted. "
             "You fold the receipt once, print facing out, and tuck it into your coat pocket. "
             "Your room key comes up with your hand. The little nick beside the round hole catches in the lining.",
@@ -128,9 +128,8 @@ class GameEngine:
             "You cross the road while there's a gap between cars and stand under the pharmacy awning. "
             "The shutters are down behind the glass. A paper sign lists the opening hours with Saturday crossed out.",
             "You turn to look back. Somebody is sitting in your chair. They have your coat and the thumb-size repair "
-            "on its left shoulder. As you watch, they put one foot flat on the tiles, then the other. "
-            "Irina leans over and waits for them to speak. You can see her mouth, and you know what she's asking. "
-            "Which foot is colder?",
+            "on its left shoulder. They lay a hand flat on the table, right where you did. "
+            "Irina leans in. Through the glass you can't hear her, but you know what she's asking.",
             "You pull at your own coat until you can see the repair. It's still there, wet through. "
             "Across the road the other you lifts the cup with their left hand. The server has gone. "
             "The chairs around your table are all upside down.",
@@ -189,9 +188,10 @@ class GameEngine:
             "You search the window for movement. Across the road the pharmacy sign is dark. There is a lamp on your table now, "
             "with a scorch on the shade. Your lamp at home has that scorch. You struck a match too close to it once when "
             "the bulb went out.",
-            "Beneath the cloth, your knee finds a chipped corner. You have to get past the same corner of your desk every time "
-            "you get out of bed. You run your thumb over the chip. From the outside it would look as if you were simply "
-            "sitting with a woman and trying to think of something to say.",
+            "Your knee catches the corner under the tablecloth. You lift the cloth just enough to find the worn patch "
+            "with your thumb. Just below it there's a chip the size of a fingernail. The corner of your desk has one "
+            "just like it. From the outside it would look as if you were simply sitting with a woman and trying "
+            "to think of something to say.",
             "“Put your hand on this end,” Irina says. “We can see what's underneath.” "
             "She rests her hand on the rim of the cup. You can't tell which of you let go of it last.",
         ], [
@@ -278,9 +278,10 @@ class GameEngine:
 
         return self._scene(state, "listen", [
             response,
+            "Your free hand comes to rest on the edge of the table. Your thumb finds the worn patch. "
             "The lamp goes out. The café bell rings twice in the dark. As it dies away you hear the radiator. Once, a pause, twice. "
-            "When the light comes back the radiator is beside your bed. Your hand is still on the corner of the table. "
-            "Beneath your fingers it's the corner of your desk. There is no café around it.",
+            "When the light comes back, the radiator is beside your bed. The rough patch is still under your thumb. "
+            "Your hand is on the corner of your desk. There is no café around it.",
             encounter_echo,
             street_echo,
             "Irina is beside the bed, sitting with her back very straight. Her shoes have made no wet marks on the floor. "
@@ -369,9 +370,8 @@ class GameEngine:
 
         text = [
             response,
-            "Irina asks if you want her to keep counting with you. You can still feel what it was like to put both feet "
-            "flat on the tiles and have somebody wait while you found the words for the cold. "
-            "She has set her feet flat again, ready for you to copy her.",
+            "Irina rests her palm on the desk the way she did at the café. She leaves room for your hand beside hers. "
+            "You remember how long she waited for you to tell her what you could feel.",
             "You look down at your hand on the knob. It would take very little to let go of it.",
         ]
         choices = [
@@ -468,9 +468,8 @@ class GameEngine:
             "“You can go,” you say. You let the knob turn back under your palm. Irina draws her coat around herself. "
             "For a second you're embarrassed at making a guest get up. Then you see the empty chair and realize you never heard her stand.",
             receipt_echo,
-            "You sit on the edge of the bed, work off your shoes and peel away the wet sock. "
-            "The floor is cold on that side and a little warmer on the other. "
-            "You put both feet down. You can give the answer in your own voice now, even with nobody there to ask.",
+            "You sit on the edge of the bed and work off your shoes. Your thumb finds a raised seam in the blanket. "
+            "You follow it all the way to the edge.",
             "The radiator knocks once. There is a longer pause than you expected. You reach for the lamp and turn it off.",
         ]
 
@@ -506,11 +505,10 @@ class GameEngine:
             }[state["street"]]
         return [
             "You open the bedroom door into the café. The windows are dark and the clock says 11:47. "
-            "Your chair is occupied. There's rain on the shoulders of the coat the person in it is wearing. "
-            "They put one foot flat on the floor and then the other.",
+            "Your chair is occupied. There's rain on the shoulders of the coat the person in it is wearing.",
             cue_echo,
             "There is a pad in your hand now. The top slip is already made out for one coffee. You can see the wet ring "
             "on the table where it belongs. You mean to leave the slip at the empty seat. You put it down between them.",
-            "Irina turns to the person in your chair. “Which foot is colder?” "
-            "The person begins to answer. Behind you, someone opens the bedroom door.",
+            "Irina rests her palm on the table. “What can you feel?” The person in your chair lays their hand next to hers. "
+            "Their thumb catches on the worn patch. They begin to answer. Behind you, someone opens the bedroom door.",
         ]
